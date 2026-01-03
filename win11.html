@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>Mini Desktop OS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --glass: rgba(255,255,255,0.18);
+  --border: rgba(255,255,255,0.25);
+  --blur: blur(20px);
+  --bg-img: url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee");
+}
+
+*{box-sizing:border-box;font-family:Segoe UI,Arial}
+
+body{
+  margin:0;
+  height:100vh;
+  overflow:hidden;
+  background:var(--bg-img) center/cover no-repeat;
+}
+
+/* Desktop */
+#desktop{
+  position:absolute;
+  inset:0;
+  padding:20px;
+}
+
+/* Taskbar */
+#taskbar{
+  position:absolute;
+  bottom:12px;
+  left:50%;
+  transform:translateX(-50%);
+  height:56px;
+  padding:0 16px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+
+  background:var(--glass);
+  backdrop-filter:var(--blur);
+  border-radius:20px;
+  border:1px solid var(--border);
+}
+
+/* Task icons */
+.task-icon{
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font-size:20px;
+}
+
+/* Window */
+.window{
+  position:absolute;
+  width:320px;
+  top:120px;
+  left:120px;
+  background:var(--glass);
+  backdrop-filter:var(--blur);
+  border-radius:16px;
+  border:1px solid var(--border);
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+}
+
+/* Header */
+.header{
+  height:42px;
+  display:flex;
+  align-items:center;
+  padding:0 12px;
+  cursor:move;
+}
+
+/* mac buttons */
+.btns{display:flex;gap:8px}
+.btn{width:12px;height:12px;border-radius:50%}
+.close{background:#ff5f57}
+.min{background:#ffbd2e}
+.max{background:#28c840}
+
+.title{
+  margin:auto;
+  font-size:13px;
+  opacity:.85;
+}
+
+.content{
+  padding:14px;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="desktop"></div>
+
+<div id="taskbar">
+  <div class="task-icon" onclick="openApp('status')">🖥️</div>
+  <div class="task-icon" onclick="openApp('rgb')">🌈</div>
+</div>
+<script>
+let zIndex = 10;
+let windows = {};
+
+/* Open App */
+function openApp(type){
+  if(windows[type]){
+    restoreWindow(type);
+    return;
+  }
+
+  let title="", body="";
+  if(type==="status"){
+    title="System Monitor";
+    body="CPU: 34%<br>RAM: 61%<br>WiFi: OK";
+  }
+  if(type==="rgb"){
+    title="RGB Control";
+    body="<input type='color'>";
+  }
+
+  createWindow(type, title, body);
+}
+
+/* Create Window */
+function createWindow(id,title,body){
+  const win=document.createElement("div");
+  win.className="window";
+  win.style.zIndex=++zIndex;
+
+  win.innerHTML=`
+    <div class="header">
+      <div class="btns">
+        <div class="btn close"></div>
+        <div class="btn min"></div>
+        <div class="btn max"></div>
+      </div>
+      <div class="title">${title}</div>
+    </div>
+    <div class="content">${body}</div>
+  `;
+
+  document.getElementById("desktop").appendChild(win);
+  windows[id]=win;
+
+  drag(win);
+
+  // buttons
+  win.querySelector(".close").onclick=()=>{
+    win.remove();
+    delete windows[id];
+  };
+
+  win.querySelector(".min").onclick=()=>{
+    win.style.display="none";
+  };
+
+  win.querySelector(".max").onclick=()=>{
+    win.classList.toggle("fullscreen");
+  };
+}
+
+/* Restore */
+function restoreWindow(id){
+  const win=windows[id];
+  win.style.display="block";
+  win.style.zIndex=++zIndex;
+}
+
+/* Drag */
+function drag(win){
+  const h=win.querySelector(".header");
+  let x=0,y=0,mx,my;
+
+  h.onmousedown=e=>{
+    mx=e.clientX; my=e.clientY;
+    document.onmousemove=move;
+    document.onmouseup=stop;
+  };
+
+  function move(e){
+    x+=e.clientX-mx; y+=e.clientY-my;
+    mx=e.clientX; my=e.clientY;
+    win.style.left=x+"px";
+    win.style.top=y+"px";
+  }
+  function stop(){document.onmousemove=null;}
+}
+</script>
+.window.fullscreen{
+  top:20px !important;
+  left:20px !important;
+  width:calc(100% - 40px) !important;
+  height:calc(100% - 100px) !important;
+}
+
+body.light{
+  --glass: rgba(255,255,255,0.45);
+  --border: rgba(0,0,0,0.15);
+  color:#111;
+  background:
+    url("https://images.unsplash.com/photo-1503264116251-35a269479413")
+    center/cover no-repeat;
+}
+<script>
+/* Change theme */
+document.addEventListener("keydown",e=>{
+  if(e.key==="t"){
+    document.body.classList.toggle("light");
+  }
+});
+</script>
+
+</body>
+</html>
